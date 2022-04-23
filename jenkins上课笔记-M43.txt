@@ -1,0 +1,345 @@
+看板
+
+
+封版
+
+ant 
+
+git:后台的服务，用于实现代码的版本功能、代码恢复
+githu-是一个代码存储平台，提供免费的版本功能(git), github.com
+gitlab-安装程序，用于实现企业的内部的私有仓库(git)
+
+
+RAID10: 4 6 8,SSD,15k/10k, 2T以上
+8C 16G
+gitlab harbor sonarqube
+
+groups对象企业中的项目，一个项目中可以有很多服务
+project：对应企业项目的中一个服务，web1
+
+
+
+发版
+部署 
+    蓝绿部署
+    灰度部署
+
+开发环境：开发自己的办公电脑
+开发测试环境：联调，通常是开发管理
+测试环境：有运维管理的正式测试环境，需要由测试人员对代码进行测试
+灰度环境：在部署生产环境之前的最后一个环境
+生产环境：对客户提供访问
+Hudson
+
+blazemeter-测试工具
+	https://www.blazemeter.com/
+fugue-云安全，商业
+	#https://www.fugue.co/
+cloudbees  #持续部署
+	https://www.cloudbees.com/
+hewlett packard enterprise #惠普
+	#惠普 https://www.hpe.com/us/en/home.html
+JFrog #商业服务公司，旗下的JFrog Artifactory 是一款到目前为止前全球唯一一个支持所有开发语言，任意维度的元数据检索、跨语言正反向依赖分析，并同时拥有深度递归、支持多活异地灾备的企业级、高可用二进制制品管理仓库库
+	https://www.jfrogchina.com/
+saucelabs #一个云测试平台，支持PC和手机自带的浏览器的兼容性测试
+	https://support.saucelabs.com/hc/en-us
+
+Scalyr是一家云端服务商。主要做日志统计分析
+https://www.scalyr.com/ 
+
+sonatype #制品管理仓库
+	https://www.sonatype.com/product-nexus-repository
+
+splunk #数据分析，商业
+	https://www.splunk.com/zh-hans_cn、
+
+
+
+java \
+-Dcom.sun.management.jmxremote \
+-Dcom.sun.management.jmxremote.port=12345 \
+-Dcom.sun.management.jmxremote.authenticate=false \
+-Dcom.sun.management.jmxremote.ssl=false \
+-Djava.rmi.server.hostname="172.31.5.103" \
+-jar jenkins-2.277.4.war &
+
+
+
+#apt install daemon
+#apt  install openjdk-8-jdk
+#dpkg -i jenkins_2.277.4_all.deb
+
+扩展的：
+    git命令
+        下载： clone
+        上传： push
+        git clone
+        git pull 
+        git add 
+        git commit
+        git push 
+        git reset 
+        branch： 可以做代码提交和回滚，通常用于测试环境或者多环境的代码隔离
+        tag： 代码的当前状态快照，不能在快照中做代码提交，用于分支只读的备份
+    分支管理
+
+必会的：
+    gitlab数据备份
+    常见的代码部署方式
+    标准的web环境
+    Jenkins和gitlab安装，以及Jenkins的插件安装
+    能在Jenkins执行简单的job
+
+
+ssh magedu@172.31.5.105 "/etc/init.d/tomcat stop"
+ssh magedu@172.31.5.106 "/etc/init.d/tomcat stop"
+ssh magedu@172.31.5.107 "/etc/init.d/tomcat stop"
+
+scp /opt/web1/index.html  magedu@172.31.5.105:/data/tomcat/tomcat_webdir/myapp/index.html
+scp /opt/web1/index.html  magedu@172.31.5.106:/data/tomcat/tomcat_webdir/myapp/index.html
+scp /opt/web1/index.html  magedu@172.31.5.107:/data/tomcat/tomcat_webdir/myapp/index.html
+
+ssh magedu@172.31.5.105 "/etc/init.d/tomcat start"
+ssh magedu@172.31.5.106 "/etc/init.d/tomcat start"
+ssh magedu@172.31.5.107 "/etc/init.d/tomcat start"
+
+
+
+http://172.31.5.102:8080/job/magedu-app1/build?token=8c994743bb5ba8c09955f5f5
+
+
+
+git branch: 'develop', credentialsId: '133bb3a3-7ba7-4428-b2ab-35724a9191f3', url: 'git@172.31.5.101:magedu/web1.git'
+
+
+
+node {  
+    stage('Build') { 
+        // 
+    }
+    stage('Test') { 
+        // 
+    }
+    stage('Deploy') { 
+        // 
+    }
+}
+
+pipline-脚本式：
+node("jenkins-slave1"){  
+    stage('代码clone') { 
+        //这是一个代码的clone几点
+        echo "clone"
+        git branch: 'develop', credentialsId: '133bb3a3-7ba7-4428-b2ab-35724a9191f3', url: 'git@172.31.5.101:magedu/web1.git'
+    }
+    stage('代码打包') { 
+        // 
+        echo "代码打包"
+        sh  "cd /var/lib/jenkins/workspace/pipline-test1/ && tar czvf myapp.tar.gz ./index.html"
+    }
+    
+    stage('停止web服务') { 
+        // 
+        echo "停止web服务"
+        sh  'ssh magedu@172.31.5.105 "/etc/init.d/tomcat stop && rm -rf  /data/tomcat/tomcat_webapps/myapp/index.html"' 
+        sh  'ssh magedu@172.31.5.106 "/etc/init.d/tomcat stop && rm -rf /data/tomcat/tomcat_webapps/myapp/index.html"' 
+        sh  'ssh magedu@172.31.5.107 "/etc/init.d/tomcat stop && rm -rf /data/tomcat/tomcat_webapps/myapp/index.html"' 
+    }
+    
+    stage('代码替换') { 
+        //
+        echo "代码替换"
+        sh 'scp /var/lib/jenkins/workspace/pipline-test1/myapp.tar.gz magedu@172.31.5.105:/data/tomcat/tomcat_appdir'
+        sh 'scp /var/lib/jenkins/workspace/pipline-test1/myapp.tar.gz magedu@172.31.5.106:/data/tomcat/tomcat_appdir'
+        sh 'scp /var/lib/jenkins/workspace/pipline-test1/myapp.tar.gz magedu@172.31.5.107:/data/tomcat/tomcat_appdir'
+        sh 'ssh magedu@172.31.5.105 "tar xvf /data/tomcat/tomcat_appdir/myapp.tar.gz -C /data/tomcat/tomcat_webapps/myapp"'
+        sh 'ssh magedu@172.31.5.106 "tar xvf /data/tomcat/tomcat_appdir/myapp.tar.gz -C /data/tomcat/tomcat_webapps/myapp"'
+        sh 'ssh magedu@172.31.5.107 "tar xvf /data/tomcat/tomcat_appdir/myapp.tar.gz -C /data/tomcat/tomcat_webapps/myapp"'
+    }
+    stage('启动web服务') { 
+        // 
+        echo "启动web服务"
+        sh  'ssh magedu@172.31.5.105 "/etc/init.d/tomcat start"' 
+        sh  'ssh magedu@172.31.5.106 "/etc/init.d/tomcat start"' 
+        sh  'ssh magedu@172.31.5.107 "/etc/init.d/tomcat start"' 
+    }   
+    
+}
+
+
+pipline-声明式：
+pipeline{
+    //agent any  //全局必须带有agent,表明此pipeline执行节点
+    agent { label 'jenkins-slave1' }
+    stages{
+        stage("代码clone"){
+            //#agent { label 'master' }  //具体执行的步骤节点，非必须
+            steps{
+                sh "cd /var/lib/jenkins/workspace/pipline-test2 && rm -rf ./*"
+                git branch: 'master', credentialsId: '133bb3a3-7ba7-4428-b2ab-35724a9191f3', url: 'git@172.31.5.101:magedu/web1.git'
+                echo "代码 clone完成"
+            }
+        }
+        
+        stage("代码构建"){
+			steps{
+				sh  "cd /var/lib/jenkins/workspace/pipline-test2/ && tar czvf myapp.tar.gz ./index.html"
+			}
+		}
+		
+	   stage("停止服务"){
+			steps{
+                sh  'ssh magedu@172.31.5.105 "/etc/init.d/tomcat stop && rm -rf  /data/tomcat/tomcat_webapps/myapp/index.html"' 
+                sh  'ssh magedu@172.31.5.106 "/etc/init.d/tomcat stop && rm -rf /data/tomcat/tomcat_webapps/myapp/index.html"' 
+                sh  'ssh magedu@172.31.5.107 "/etc/init.d/tomcat stop && rm -rf /data/tomcat/tomcat_webapps/myapp/index.html"' 
+			}
+		}
+        
+		stage("代码copy"){
+			steps{
+                sh 'scp /var/lib/jenkins/workspace/pipline-test2/myapp.tar.gz magedu@172.31.5.105:/data/tomcat/tomcat_appdir'
+                sh 'scp /var/lib/jenkins/workspace/pipline-test2/myapp.tar.gz magedu@172.31.5.106:/data/tomcat/tomcat_appdir'
+                sh 'scp /var/lib/jenkins/workspace/pipline-test2/myapp.tar.gz magedu@172.31.5.107:/data/tomcat/tomcat_appdir'
+			}
+		}
+		
+		stage("代码部署"){
+			steps{
+                sh 'ssh magedu@172.31.5.105 "tar xvf /data/tomcat/tomcat_appdir/myapp.tar.gz -C /data/tomcat/tomcat_webapps/myapp"'
+                sh 'ssh magedu@172.31.5.106 "tar xvf /data/tomcat/tomcat_appdir/myapp.tar.gz -C /data/tomcat/tomcat_webapps/myapp"'
+                sh 'ssh magedu@172.31.5.107 "tar xvf /data/tomcat/tomcat_appdir/myapp.tar.gz -C /data/tomcat/tomcat_webapps/myapp"'
+			}
+		}
+		
+		
+		stage("启动服务"){
+			steps{
+                sh  'ssh magedu@172.31.5.105 "/etc/init.d/tomcat start"' 
+                sh  'ssh magedu@172.31.5.106 "/etc/init.d/tomcat start"' 
+                sh  'ssh magedu@172.31.5.107 "/etc/init.d/tomcat start"' 
+			}
+		}
+    }
+}
+
+
+
+
+
+
+不能使用root启动sonarqube服务
+
+
+
+1.Jenkins的授权
+2.Jenkins基于ssh key实现非交互式的代码clone
+3.通过shell或者python批量触发job构建
+    curl  http://172.31.5.102:8080/job/magedu-app1/build?token=8c994743bb5ba8c09955f5f5
+    curl  http://172.31.5.102:8080/job/magedu-app2/build?token=8c994743bb5ba8c09955f5f5
+    curl  http://172.31.5.102:8080/job/magedu-app3/build?token=8c994743bb5ba8c09955f5f5
+4.Jenkins的分布式
+5.基于pipline指定job运行在指定的slave节点进行代码部署
+6.视图，主要使用列表视图
+7.基于sonarqube实现代码扫描
+    通过脚本-必会的
+    通过Jenkins-了解
+
+
+邀功
+
+
+黑盒
+    点点点
+
+
+1.可以实现灰度/金丝雀部署
+    对服务器进行分组部署
+
+2.可以回滚 
+    myapp -> /data/tomcat/tomcat_webdir/code-2021-05-19_12-10-00/
+
+
+3.可以删除历史部署包
+
+
+
+微服务和消息队列 ELK ceph k8s、prometheus
+
+你的角色、你的职责
+项目内容
+知识库 wiki
+
+知识产权
+    vmware esxi 
+    xsell
+
+很难的工作：技术比较强、整体个人素质比较好的
+    实施文档
+
+简单的工作：
+
+西二旗
+    后厂
+    新浪 网易
+
+望京SOHO
+
+朝阳
+
+亦庄
+    京东
+
+1.打电话
+    路线
+    提前10分钟
+    商务楼
+    填表-登记表
+        姓名
+    
+    面试题
+
+    面试官
+        一轮
+        两轮
+        三轮
+    谈薪资
+
+    矜持
+    录取通知   
+        身份证
+        学历
+  
+监控
+    zabbix 
+
+
+    不要紧张
+    淡定
+    在回答问题的时候尽量思考一两秒钟
+    按步骤
+        条理性
+
+做面试总结:
+    面霸
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
